@@ -1,11 +1,13 @@
+import java.io.File
+
 plugins {
     id 'java'
-    id 'org.jetbrains.intellij' version '1.13.3'
+    id 'org.jetbrains.intellij' version '1.16.1'
     id 'org.jetbrains.kotlin.jvm' version '1.8.21'
 }
 
 group 'com.alexey-anufriev'
-version '1.9.4'
+version '1.9.5'
 
 repositories {
     mavenCentral()
@@ -27,7 +29,7 @@ intellij {
 patchPluginXml {
     version.set(project.version as String)
     sinceBuild.set('222')
-    untilBuild.set('232.*')
+    untilBuild.set('233.*')
 }
 
 kotlin {
@@ -47,4 +49,68 @@ tasks.register('runRider') {
         type.set("RD")
     }
     dependsOn(runIde)
+}
+
+tasks.register('installPlugin') {
+  doLast {
+    // Default environment file.
+    // WARNING: Variables defined on the system will override the ones defined in this file
+    var envFile = "../.env"
+
+    // Load environment file if it exists
+    var environment = [:]
+    if (file(envFile).exists()) {
+      file(envFile).readLines().each() {
+        if (!it.isEmpty() && !it.startsWith("#")) {
+          def pos = it.indexOf("=")
+          def key = it.substring(0, pos)
+
+          // check if the key is already set
+          if (System.getenv(key) == null) {
+            environment[key] = it.substring(pos + 1)
+          }
+        }
+      }
+    }
+
+    def pluginName = "scopes-manager-intellij-plugin"
+    def installLocations = environment.get("INSTALL_LOCATIONS") ?: System.getenv("INSTALL_LOCATIONS")
+
+    if (installLocations == null) {
+      println("[WARNING] No install locations specified")
+      return
+    }
+
+    List<String> locationsList = installLocations.split(",")
+
+    // eg. build/distributions/Plugin-2000.10.1.100.zip
+    def pluginZip = file("build/distributions/${pluginName}-" + project.version + '.zip')
+
+    locationsList.each { location ->
+      // extract installation name (eg  C:\Users\...\JetBrains\Rider2023.2\plugins
+      // -> Rider2023.2)
+      def separator = location.contains("/") ? "/" : "\\\\"
+      def installationName = location.split(separator)[-2]
+
+      // delete plugin folder
+      File existingInstallation = file(location + "/${pluginName}")
+      if (existingInstallation.exists()) {
+        if (!existingInstallation.deleteDir()) {
+          println("[ERROR] Skipping ${installationName}. Failed to delete existing installation")
+          return
+        }
+      }
+
+      copy {
+        from zipTree(pluginZip)
+        into location
+      }
+
+      println("Plugin installed to ${installationName}")
+    }
+  }
+}
+
+tasks.named('buildPlugin') {
+  finalizedBy 'installPlugin'
 }
