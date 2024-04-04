@@ -2,24 +2,24 @@ import java.io.File
 
 plugins {
     id 'java'
-    id 'org.jetbrains.intellij' version '1.16.1'
-    id 'org.jetbrains.kotlin.jvm' version '1.8.21'
+    id 'org.jetbrains.intellij' version '1.17.3'
+    id 'org.jetbrains.kotlin.jvm' version '1.9.23'
 }
 
 group 'com.alexey-anufriev'
-version '1.9.5'
+version '1.9.6'
 
 repositories {
     mavenCentral()
 }
 
 dependencies {
-    implementation 'org.jetbrains.kotlin:kotlin-stdlib:1.8.21'
-    implementation 'org.jetbrains.kotlin:kotlin-reflect:1.8.21'
-    testImplementation 'org.assertj:assertj-core:3.24.2'
-    testImplementation "org.mockito.kotlin:mockito-kotlin:5.0.0"
-    testImplementation 'org.junit.jupiter:junit-jupiter-api:5.9.3'
-    testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.9.3'
+    implementation 'org.jetbrains.kotlin:kotlin-stdlib:1.9.23'
+    implementation 'org.jetbrains.kotlin:kotlin-reflect:1.9.23'
+    testImplementation 'org.assertj:assertj-core:3.25.3'
+    testImplementation 'org.mockito.kotlin:mockito-kotlin:5.2.1'
+    testImplementation 'org.junit.jupiter:junit-jupiter-api:5.10.2'
+    testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.10.2'
 }
 
 intellij {
@@ -29,7 +29,7 @@ intellij {
 patchPluginXml {
     version.set(project.version as String)
     sinceBuild.set('222')
-    untilBuild.set('233.*')
+    untilBuild.set('241.*')
 }
 
 kotlin {
@@ -45,10 +45,23 @@ publishPlugin {
 }
 
 tasks.register('runRider') {
+    dependsOn(runIde)
     intellij {
         type.set("RD")
     }
+    runIde {
+        ideDir.set(file("/home/alexey/.local/share/JetBrains/Toolbox/apps/rider"))
+    }
+}
+
+tasks.register('runGoland') {
     dependsOn(runIde)
+    intellij {
+        type.set("GO")
+    }
+    runIde {
+        ideDir.set(file("/home/alexey/.local/share/JetBrains/Toolbox/apps/goland"))
+    }
 }
 
 tasks.register('installPlugin') {

@@ -1,0 +1,32 @@
+name: Build Plugin Snapshot
+
+on:
+  push:
+    branches: [ main ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Free Disk Space
+      uses: jlumbroso/free-disk-space@v1.3.1
+
+    - name: Fetch Sources
+      uses: actions/checkout@v4.1.2
+
+    - name: Gradle Wrapper Validation
+      uses: gradle/wrapper-validation-action@v2.1.2
+
+    - name: Setup Java
+      uses: actions/setup-java@v4.2.1
+      with:
+        distribution: zulu
+        java-version: 17
+        cache: gradle
+
+    - name: Run Tests
+      run: ./gradlew test
+
+    - name: Run Plugin Verification
+      run: ./gradlew runPluginVerifier -Pplugin.verifier.home.dir=~/.pluginVerifier
